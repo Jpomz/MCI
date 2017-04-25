@@ -1,0 +1,43 @@
+---
+title: "Macroinvertebrate Community Index"
+author: "Justin Pomeranz - J Pomz"
+date: "April 25, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+options(tibble.print_min = 4L, tibble.print_max = 4L)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Introduction
+
+The macroinvertebrate community index (MCI) is a biotic index commonly used to rate the quality of fresh waters in New Zealand. Each freshwater taxon is given a tolerance value (1 to 10) based on sensitivity to organic pollution. These values are averaged in order to calculate a site score. When quantitative and qualitative abundance data are available, the QMCI and SQMCI can be calculated, respectively. More information on the MCI and its variants is available at: <http://www.mfe.govt.nz/sites/default/files/mci-user-guide-may07.pdf>
+
+This tutorial will show you how to easily calculate the MCI and its variants using R, using the suite of packages known as the `tidyverse`. 
+
+Although the MCI was originally created to only assess organic pollution of freshwaters, it is often used in any monitoring of freshwaters in New Zealand. Another index has been developed to assess the effects of acid mine drainage, the AMDI. The underlying logic, and the calculation of these indices is similar, so we will also go over how to calculate the AMDI value. More information on the AMDI is available at: <http://www.tandfonline.com/doi/abs/10.1080/00288330.2012.663764>
+
+# Setup
+
+To begin, let's setup our R studio session. If you don't already have these packages loaded, you will first need to run `install.packages("tidyverse")`. Then you will need to load these libraries:
+
+```{r eval = FALSE}
+library(tidyverse)
+```
+
+## Data
+
+There are three .csv files in my MCI github repository: bugs.csv, indices.csv, and phylogeny.csv. Download these three .csv files and load them into your environment.   
+
+```{r}
+bugs <- read_csv("bugs.csv")
+indices <- read_csv("indices.csv")
+phylo <- read_csv("phylogeny.csv")
+```
+### note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, but a full description is out of the scope of this tutorial. If you aren't familiar with tibbles, I highly recommend *R for Data Science* by Hadley Wickham and Garret Grolemund, available free at: <http://r4ds.had.co.nz/>.
+
+### note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. "C:/Desktop/bugs.csv"), and modify your code accordingly. The reason I can just type in `read_csv("bugs.csv")` is because I'm using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the *R for Data Science* book mentioned above. 
