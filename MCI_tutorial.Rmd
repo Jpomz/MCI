@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(collapse = T, comment = "#>")
 options(tibble.print_min = 4L, tibble.print_max = 4L)
+R.options=list(max.print=10)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
@@ -29,6 +30,13 @@ To begin, let's setup our R studio session. If you don't already have these pack
 library(tidyverse)
 ```
 
+## Prerequisites
+
+At this point I would like to mention that this tutorial takes a "tidyverse" centric view. You should be able to follow along without needing too much background information. However, if you're not familiar with the pipe operator `%>%` I would recommend doing a quick google search just to familiarize yourself with it. It will make the more copmlicated multi-step code chunks lower down easier to understand. 
+
+If you would like to learn more about the tidyverse packages and philosophy, I highly recommend *R for Data Science* by Hadley Wickham and Garret Grolemund, available free at: <http://r4ds.had.co.nz/>.
+
+
 ## Data
 
 There are three .csv files in my MCI github repository: bugs.csv, indices.csv, and phylogeny.csv. Download these three .csv files and load them into your environment.   
@@ -38,6 +46,58 @@ bugs <- read_csv("bugs.csv")
 indices <- read_csv("indices.csv")
 phylo <- read_csv("phylogeny.csv")
 ```
-### note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, but a full description is out of the scope of this tutorial. If you aren't familiar with tibbles, I highly recommend *R for Data Science* by Hadley Wickham and Garret Grolemund, available free at: <http://r4ds.had.co.nz/>.
+### note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial. 
 
-### note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. "C:/Desktop/bugs.csv"), and modify your code accordingly. The reason I can just type in `read_csv("bugs.csv")` is because I'm using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the *R for Data Science* book mentioned above. 
+### note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. "C:/Desktop/bugs.csv"), and modify your path code within the quotes accordingly. The reason I can just type in `read_csv("bugs.csv")` is because I'm using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the *R for Data Science* book mentioned above. 
+
+The `bugs` data frame is a toy dataset and contains community composition data from 14 "sites". This data is made up, but based on actual surveys conducted on the west coast of the South Island of New Zealand. 
+
+```{r, r tidy=TRUE}
+bugs
+```
+
+Three surber samples (area = 0.06 m^2^) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given genus found within a sample. 
+
+The `indices` data frame is simply a list of taxa with corresponding tolerance scores for the MCI and AMDI, respectively. 
+
+```{r}
+head(indices)
+```
+
+## Step 1: combine data frames
+
+The first thing we want to is combine these data frames so that the `bugs` object has the MCI and AMDI tolerance scores per taxa. In order to do this we will use the `dplyr::left_join()` function. Using the `left_join()` function ensures that all observations in the `bugs` data frame will be kept, even if no corresponding taxa observation occurs in the `indices` data frame. 
+
+```{r}
+bugs.index <- left_join(bugs, indices, by = "taxa")
+```
+
+I made sure that all of the taxa in `bugs` has a corresponding taxa in the `indices` data, but it's a good idea to check this whenever you're merging two data frames together. There are a number of ways to do this, but I generally use the `dplyr::setdiff()` function. 
+
+```{r}
+setdiff(bugs$taxa, indices$taxa)
+```
+
+This shows us that there are no observations in `bugs$taxa` that *do not* occur in `indices`. 
+Compare this with the following:
+
+```{r eval=FALSE, include=FALSE}
+setdiff(indices$taxa, bugs$taxa)
+# output not shown
+```
+
+This gives us a character vector containing all of the values of `indices$taxa` that *do not* occur in `bugs$taxa`. 
+
+## Step 2: calculate MCI
+
+The MCI can be calculated using presence / absence data with the following formula: 
+$$\sum_{i=1}^S a_i / S * 20$$
+Where $a_i$ is the tolerance value for taxa *i*, and $S$ is the number of taxa within a sample. 
+
+First, calculate the MCI score per surber. 
+
+```{r}
+mci.surber <- bugs.index %>%
+  group_by(site, surber) %>%
+  summarise(MCI = (sum(MCI) / n()) * 20) 
+
