@@ -100,4 +100,31 @@ First, calculate the MCI score per surber.
 mci.surber <- bugs.index %>%
   group_by(site, surber) %>%
   summarise(MCI = (sum(MCI) / n()) * 20) 
+```
 
+Then, calculate the average MCI score and standard deviation by site. 
+
+```{r}
+mci.site <- mci.surber %>%
+  group_by(site) %>%
+  summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI))
+```
+
+Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the `reorder()` function. We will also add reference lines delineating which sites are considered excellent, good, fair, and poor. 
+
+```{r}
+ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
+# reorder() function organizes sites based on mean.MCI score, lowest to highes               
+  geom_bar(stat = "identity") +
+  geom_errorbar(
+    aes(ymax = mean.MCI + sd.MCI, ymin = mean.MCI - sd.MCI), width = 0.25) +
+    geom_hline(yintercept = 119, color = "green", size = 1) +
+  geom_hline(yintercept = 100, color = "yellow", size = 1) +
+  geom_hline(yintercept = 80, color = "red", size = 1) +
+  theme_classic()
+```
+
+Site scores > 119 are considered excellent, 100-119 are considered good, 80-99 are considered fair, and < 80 are considered poor. 
+
+
+geom_hline(yintercept = 20)
