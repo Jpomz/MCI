@@ -41,12 +41,11 @@ library(tidyverse)
 
 # Data
 
-There are three .csv files in my MCI github repository: bugs.csv, indices.csv, and phylogeny.csv. Download these three .csv files and load them into your environment.   
+There are two .csv files in my MCI github repository: bugs.csv, and indices.csv. Download these two .csv files and load them into your environment.   
 
 ```{r echo=FALSE}
 bugs <- read_csv("bugs.csv")
 indices <- read_csv("indices.csv")
-phylo <- read_csv("phylogeny.csv")
 ```
 ### note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial. 
 
@@ -62,7 +61,7 @@ Other useful commands that I often use are `base::names();base::str() and dplyr:
 
 Three surber samples (area = 0.06 m^2^) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given genus found within a sample. 
 
-The `indices` data frame is simply a list of taxa with corresponding tolerance scores for the MCI and AMDI, respectively. 
+The `indices` data frame is simply a list of taxa with corresponding tolerance scores for the MCI and AMDI, respectively.  
 
 ```{r}
 indices
@@ -122,7 +121,7 @@ mci.site <-
   summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI)) # calculate mean and sd MCI
 ```
 
-Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the `reorder()` function. We will also add reference lines delineating which sites are considered excellent, good, fair, and poor. 
+Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the `reorder()` function. We will also add reference lines (`geom_hline()`) delineating which sites are considered excellent, good, fair, and poor. 
 
 ```{r}
 ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
@@ -134,6 +133,7 @@ ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
   geom_hline(yintercept = 119, color = "green", size = 1) +
   geom_hline(yintercept = 100, color = "yellow", size = 1) +
   geom_hline(yintercept = 80, color = "red", size = 1) +
+  labs(x = "site", y = "mean MCI score") +# change default axis labels
   theme_classic() # gets rid of grey background, grid lines, etc. 
 # see ?ggtheme for more
 ```
@@ -169,24 +169,117 @@ QMCI values >5.99 are considered excellent, 5.90 - 5.00 good, 4.00 - 4.99 fair, 
 We plot the results using the same template as above. Make sure you're using all of the right objects and variables! (e.g. MCI --> QMCI, mean.MCI --> QMCI, etc)
 
 ```{r}
-ggplot(qmci.site, aes(reorder(site, mean.QMCI), mean.QMCI)) +
-# reorder() function organizes sites based on mean.MCI score, lowest to highest               
-  geom_bar(stat = "identity") + # plot bar
-  geom_errorbar( # this command adds error bars
+ggplot(qmci.site, aes(reorder(site, mean.QMCI), mean.QMCI)) +             
+  geom_bar(stat = "identity") +
+  geom_errorbar( 
     aes(ymax = mean.QMCI + sd.QMCI, ymin = mean.QMCI - sd.QMCI), width = 0.25) +
-  # geom_hline() adds reference lines at a given value of y
   geom_hline(yintercept = 5.99, color = "green", size = 1) +
   geom_hline(yintercept = 5, color = "yellow", size = 1) +
   geom_hline(yintercept = 4, color = "red", size = 1) +
-  theme_classic() # gets rid of grey background, grid lines, etc. 
-# see ?ggtheme for more
+  labs(x = "site", y = "mean QMCI score") +
+  theme_classic() 
 ```
-Notice the differences in the conclusions we would draw based on the QMCI. Which sites appear to be in "better"" condition using the QMCI? Which sites appear "worse"?
-
-
+Notice the differences in the conclusions we would draw based on the QMCI. Which sites appear to be in "better" condition using the QMCI? Which sites appear "worse"?
 
 # AMDI
 
 We calculate the AMDI in much the same way as the MCI. Since the `bugs.index` object already contains the AMDI tolerance values, we can start directly with this object. 
 
+The formula to calculate the AMDI is:
+$$[(\sum_{i=1}^S b_i / S ) * log10S] * 10$$
+
+Where $b$ is the tolerance score for the *i*th taxa and $S$ is the total number of scoring taxa present at a site. If a taxa at a site does not have an AMDI tolerance score, it is not included in the calculation. AMDI scores range from 0 to 100, with higher scores indicating less acid mine drainage impacts. Note that the AMDI can only be calculated with presence/absence data, and there is currently no way of incorporating qauntitative abundance data. 
+
+```{r}
+amdi.surber <- bugs.index %>%
+  group_by(site, surber) %>%
+  filter(!is.na(AMDI)) %>% # remove taxa that do not have AMDI score
+  summarise(AMDI = (sum(AMDI) / n()) * log10(n()) * 10)
+```
+
+And calculate mean score by site:
+```{r}
+amdi.site <- 
+  amdi.surber %>%
+  group_by(site) %>%
+  summarise(mean.AMDI = mean(AMDI), sd.AMDI = sd(AMDI))
+```
+
+AMDI scores > 40 are considered to be unimpacted by acid mine drainage, while socres between 20-40 and < 20 are considered to be impacted and severely impacted respectively. 
+
+```{r}
+ggplot(amdi.site, aes(reorder(site, mean.AMDI), mean.AMDI)) +
+  geom_bar(stat = "identity") + 
+  geom_errorbar( 
+    aes(ymax = mean.AMDI + sd.AMDI, ymin = mean.AMDI - sd.AMDI), width = 0.25) +
+  geom_hline(yintercept = 40, color = "green", size = 1) +
+  geom_hline(yintercept = 20, color = "red", size = 1) +
+  labs(x = "site", y = "mean AMDI score") +
+  theme_classic() 
+```
+
+# Just give me the code!
+If you have any questions, see detailed explanation above.  
+
+```{r eval = FALSE, echo=FALSE}
+# load library
+library(tidyverse)
+# read data
+bugs <- read_csv("bugs.csv")
+indices <- read_csv("indices.csv")
+# merge datasets
+bugs.index <- left_join(bugs, indices, by = "taxa")
+
+# MCI in one step
+mci.site <- 
+  bugs.index %>% 
+  group_by(site, surber) %>% 
+  summarise(MCI = (sum(MCI) / n()) * 20) %>%
+  group_by(site) %>%
+  summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI))
+# plot MCI results
+ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
+  geom_bar(stat = "identity") + 
+  geom_errorbar( 
+    aes(ymax = mean.MCI + sd.MCI, ymin = mean.MCI - sd.MCI), width = 0.25) +
+  geom_hline(yintercept = 119, color = "green", size = 1) +
+  geom_hline(yintercept = 100, color = "yellow", size = 1) +
+  geom_hline(yintercept = 80, color = "red", size = 1) +
+  labs(x = "site", y = "mean MCI score") +
+  theme_classic() 
+
+# QMCI in one step
+qmci.site <- bugs.index %>%
+  group_by(site, surber) %>%
+  summarise(QMCI = (sum(MCI * number) / sum(number))) %>%
+  group_by(site) %>%
+  summarise(mean.QMCI = mean(QMCI), sd.QMCI = sd(QMCI))
+# QMCI plot
+ggplot(qmci.site, aes(reorder(site, mean.QMCI), mean.QMCI)) +             
+  geom_bar(stat = "identity") +
+  geom_errorbar( 
+    aes(ymax = mean.QMCI + sd.QMCI, ymin = mean.QMCI - sd.QMCI), width = 0.25) +
+  geom_hline(yintercept = 5.99, color = "green", size = 1) +
+  geom_hline(yintercept = 5, color = "yellow", size = 1) +
+  geom_hline(yintercept = 4, color = "red", size = 1) +
+  labs(x = "site", y = "mean QMCI score") +
+  theme_classic()
+
+# AMDI in one step
+amdi.site <-  bugs.index %>%
+  group_by(site, surber) %>%
+  filter(!is.na(AMDI)) %>% 
+  summarise(AMDI = (sum(AMDI) / n()) * log10(n()) * 10) %>%
+  group_by(site) %>%
+  summarise(mean.AMDI = mean(AMDI), sd.AMDI = sd(AMDI))
+# plot AMDI results
+ggplot(amdi.site, aes(reorder(site, mean.AMDI), mean.AMDI)) +
+  geom_bar(stat = "identity") + 
+  geom_errorbar( 
+    aes(ymax = mean.AMDI + sd.AMDI, ymin = mean.AMDI - sd.AMDI), width = 0.25) +
+  geom_hline(yintercept = 40, color = "green", size = 1) +
+  geom_hline(yintercept = 20, color = "red", size = 1) +
+  labs(x = "site", y = "mean AMDI score") +
+  theme_classic() 
+```
 
