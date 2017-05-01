@@ -2,7 +2,7 @@
 title: "Macroinvertebrate Community Index"
 author: "Justin Pomeranz - J Pomz"
 date: "April 25, 2017"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +26,7 @@ The following tutorial is primarily designed for freshwater ecologists and pract
 
 # Prerequisites
 
-At this point I would like to mention that this tutorial takes a "tidyverse" centric view. You should be able to follow along without needing too much background information. However, if you're not familiar with the pipe operator `%>%` I would recommend doing a quick google search just to familiarize yourself with it. It will make the more copmlicated multi-step code chunks lower down easier to understand. 
+At this point I would like to mention that this tutorial takes a "tidyverse" centric view. You should be able to follow along without needing too much background information. However, if you're not familiar with the pipe operator `%>%` I would recommend doing a quick google search just to familiarize yourself with it. Briefly, it takes the output from the function on the left side of the operator and puts it in as the first argument in the function on the right side of the operator. I find it helpful to think *then* whenever you see a `%>%` operator. It will make the more complicated multi-step code chunks lower down easier to understand. 
 
 If you would like to learn more about the tidyverse packages and philosophy, I highly recommend *R for Data Science* by Hadley Wickham and Garret Grolemund, available free at: <http://r4ds.had.co.nz/>.
 
@@ -43,13 +43,13 @@ library(tidyverse)
 
 There are two .csv files in my MCI github repository: bugs.csv, and indices.csv. Download these two .csv files and load them into your environment.   
 
-```{r echo=FALSE}
+```{r}
 bugs <- read_csv("bugs.csv")
 indices <- read_csv("indices.csv")
 ```
-### note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial. 
+note 1: I use the `readr::read_csv()` command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial. 
 
-### note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. "C:/Desktop/bugs.csv"), and modify your path code within the quotes accordingly. The reason I can just type in `read_csv("bugs.csv")` is because I'm using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the *R for Data Science* book mentioned above. 
+note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. "C:/Desktop/bugs.csv"), and modify your path code within the quotes accordingly. The reason I can just type in `read_csv("bugs.csv")` is because I'm using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the *R for Data Science* book mentioned above. 
 
 The `bugs` data frame is a toy dataset and contains community composition data from 14 "sites". This data is made up, but based on actual surveys conducted on the west coast of the South Island of New Zealand. Always start out by taking a look at the data. It's good to have a mental image of the data structure. since the `read_csv()` command reads the data in as a tibble, simply typing the name of the object is a useful place to start.  
 
@@ -59,7 +59,7 @@ bugs
 
 Other useful commands that I often use are `base::names();base::str() and dplyr::glimpse()`. Try running these commads and see how the data output changes. 
 
-Three surber samples (area = 0.06 m^2^) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given genus found within a sample. 
+Three surber samples (area = 0.06 m^2^) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given taxa found within a sample. 
 
 The `indices` data frame is simply a list of taxa with corresponding tolerance scores for the MCI and AMDI, respectively.  
 
@@ -71,7 +71,7 @@ indices
 
 ## Step 1: combine data frames
 
-The first thing we want to is combine these data frames so that the `bugs` object has the MCI and AMDI tolerance scores per taxa. In order to do this we will use the `dplyr::left_join()` function. Using the `left_join()` function ensures that all observations in the `bugs` data frame will be kept, even if no corresponding taxa observation occurs in the `indices` data frame. 
+The first thing we want to is combine these data frames so that the `bugs` object has the MCI and AMDI tolerance scores by taxa. In order to do this we will use the `dplyr::left_join()` function. Using the `left_join()` function ensures that all observations in the `bugs` data frame will be kept, even if no corresponding taxa observation occurs in the `indices` data frame. 
 
 ```{r}
 bugs.index <- left_join(bugs, indices, by = "taxa")
@@ -84,12 +84,7 @@ setdiff(bugs$taxa, indices$taxa)
 ```
 
 This shows us that there are no observations in `bugs$taxa` that *do not* occur in `indices`. 
-Compare this with the following:
-
-```{r eval=FALSE, include=FALSE}
-setdiff(indices$taxa, bugs$taxa)
-# output not shown
-```
+Try running the following: `setdiff(indices$taxa, bugs$taxa)` (output not shown in this document). 
 
 This gives us a character vector containing all of the values of `indices$taxa` that *do not* occur in `bugs$taxa`. 
 
@@ -101,9 +96,7 @@ Where $a_i$ is the tolerance value for taxa *i*, and $S$ is the number of taxa w
 
 Values of MCI can range from 0 to 200, but are rarely <50 or >150. 
 
-First, calculate the MCI score per surber. This by grouping the data into unique combinations of site and surber
-
-In order to calculate the MCI score by sample, we first use the `group_by()` command. This "groups" the data so that the following summary command is applied to each group independently.
+In order to calculate the MCI score for a site, we first need to calculate the score by surber sample. This is done with the `group_by()` command. This "groups" the data so that the subsequent `summarise` command is applied to each group independently.
 
 ```{r}
 mci.surber <- 
@@ -121,7 +114,7 @@ mci.site <-
   summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI)) # calculate mean and sd MCI
 ```
 
-Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the `reorder()` function. We will also add reference lines (`geom_hline()`) delineating which sites are considered excellent, good, fair, and poor. 
+Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the `reorder()` function. We will also add reference lines using the `geom_hline()` command for delineating which sites are considered excellent, good, fair, and poor. 
 
 ```{r}
 ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
@@ -146,7 +139,7 @@ Our data also contains the abundance of taxa per surber sample `bugs.index$numbe
 $$\sum_{i=1}^S (a_i * n_i) / N$$
 Where $S$ is the total number of taxa, $n_i$ is the abundance for the *i*th taxa, and $N$ is the total abundance in the sample. 
 
-The QMCI ranges from 0 to 10. Note that this is a different scale than the MCI this is by design because these metrics should not be directly compared to one another. 
+The QMCI ranges from 0 to 10. Note that this is a different scale than the MCI. This is by design because these metrics should not be directly compared to one another. 
 
 Again, we start out by calculating the QMCI score per sample `group_by(site, surber)`:
 ```{r}
@@ -193,7 +186,7 @@ Where $b$ is the tolerance score for the *i*th taxa and $S$ is the total number 
 ```{r}
 amdi.surber <- bugs.index %>%
   group_by(site, surber) %>%
-  filter(!is.na(AMDI)) %>% # remove taxa that do not have AMDI score
+  filter(!is.na(AMDI)) %>% # remove taxa that do not have an AMDI score
   summarise(AMDI = (sum(AMDI) / n()) * log10(n()) * 10)
 ```
 
@@ -221,7 +214,7 @@ ggplot(amdi.site, aes(reorder(site, mean.AMDI), mean.AMDI)) +
 # Just give me the code!
 If you have any questions, see detailed explanation above.  
 
-```{r eval = FALSE, echo=FALSE}
+```{r eval = FALSE}
 # load library
 library(tidyverse)
 # read data
