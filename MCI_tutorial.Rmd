@@ -223,6 +223,7 @@ indices <- read_csv("indices.csv")
 # merge datasets
 bugs.index <- left_join(bugs, indices, by = "taxa")
 
+#### MCI ####
 # MCI in one step
 mci.site <- 
   bugs.index %>% 
@@ -241,6 +242,7 @@ ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
   labs(x = "site", y = "mean MCI score") +
   theme_classic() 
 
+#### QMCI ####
 # QMCI in one step
 qmci.site <- bugs.index %>%
   group_by(site, surber) %>%
@@ -258,6 +260,7 @@ ggplot(qmci.site, aes(reorder(site, mean.QMCI), mean.QMCI)) +
   labs(x = "site", y = "mean QMCI score") +
   theme_classic()
 
+#### AMDI ####
 # AMDI in one step
 amdi.site <-  bugs.index %>%
   group_by(site, surber) %>%
