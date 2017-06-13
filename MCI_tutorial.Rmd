@@ -2,7 +2,9 @@
 title: "Macroinvertebrate Community Index"
 author: "Justin Pomeranz - J Pomz"
 date: "April 25, 2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
