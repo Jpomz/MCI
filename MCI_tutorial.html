@@ -133,7 +133,7 @@ $(document).ready(function () {
 </div>
 <div id="prerequisites" class="section level1">
 <h1>Prerequisites</h1>
-<p>At this point I would like to mention that this tutorial takes a “tidyverse” centric view. You should be able to follow along without needing too much background information. However, if you’re not familiar with the pipe operator <code>%&gt;%</code> I would recommend doing a quick google search just to familiarize yourself with it. It will make the more copmlicated multi-step code chunks lower down easier to understand.</p>
+<p>At this point I would like to mention that this tutorial takes a “tidyverse” centric view. You should be able to follow along without needing too much background information. However, if you’re not familiar with the pipe operator <code>%&gt;%</code> I would recommend doing a quick google search just to familiarize yourself with it. Briefly, it takes the output from the function on the left side of the operator and puts it in as the first argument in the function on the right side of the operator. I find it helpful to think <em>then</em> whenever you see a <code>%&gt;%</code> operator. It will make the more complicated multi-step code chunks lower down easier to understand.</p>
 <p>If you would like to learn more about the tidyverse packages and philosophy, I highly recommend <em>R for Data Science</em> by Hadley Wickham and Garret Grolemund, available free at: <a href="http://r4ds.had.co.nz/" class="uri">http://r4ds.had.co.nz/</a>.</p>
 </div>
 <div id="setup" class="section level1">
@@ -144,27 +144,26 @@ $(document).ready(function () {
 <div id="data" class="section level1">
 <h1>Data</h1>
 <p>There are two .csv files in my MCI github repository: bugs.csv, and indices.csv. Download these two .csv files and load them into your environment.</p>
-<pre><code>#&gt; Parsed with column specification:
+<pre class="r"><code>bugs &lt;- read_csv(&quot;bugs.csv&quot;)
+#&gt; Parsed with column specification:
 #&gt; cols(
 #&gt;   site = col_character(),
 #&gt;   surber = col_character(),
 #&gt;   taxa = col_character(),
 #&gt;   number = col_integer()
 #&gt; )
+indices &lt;- read_csv(&quot;indices.csv&quot;)
 #&gt; Parsed with column specification:
 #&gt; cols(
 #&gt;   taxa = col_character(),
 #&gt;   MCI = col_integer(),
 #&gt;   AMDI = col_integer()
 #&gt; )</code></pre>
-<div id="note-1-i-use-the-readrread_csv-command-to-read-in-my-.csv-files-because-it-automatically-reads-them-in-as-tibble-objects.-tibbles-are-a-useful-data-structure-to-work-with-and-are-designed-specifically-to-work-with-the-tidyverse-but-a-full-description-is-out-of-the-scope-of-this-tutorial." class="section level3">
-<h3>note 1: I use the <code>readr::read_csv()</code> command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial.</h3>
-</div>
-<div id="note-2-your-path-names-to-the-.csv-files-may-differ.-make-sure-you-know-where-you-saved-the-files-to-e.g.-cdesktopbugs.csv-and-modify-your-path-code-within-the-quotes-accordingly.-the-reason-i-can-just-type-in-read_csvbugs.csv-is-because-im-using-rprojects-and-saved-my-data-directly-into-my-rproject-directory.-i-highly-recommend-working-in-rprojects-but-again-a-run-down-on-that-is-outside-the-scope-of-this-tutorial.-if-you-want-to-learn-more-i-recommend-reading-chapter-8-in-the-r-for-data-science-book-mentioned-above." class="section level3">
-<h3>note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. “C:/Desktop/bugs.csv”), and modify your path code within the quotes accordingly. The reason I can just type in <code>read_csv(&quot;bugs.csv&quot;)</code> is because I’m using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the <em>R for Data Science</em> book mentioned above.</h3>
+<p>note 1: I use the <code>readr::read_csv()</code> command to read in my .csv files because it automatically reads them in as tibble objects. Tibbles are a useful data structure to work with, and are designed specifically to work with the tidyverse, but a full description is out of the scope of this tutorial.</p>
+<p>note 2: your path names to the .csv files may differ. Make sure you know where you saved the files to (e.g. “C:/Desktop/bugs.csv”), and modify your path code within the quotes accordingly. The reason I can just type in <code>read_csv(&quot;bugs.csv&quot;)</code> is because I’m using Rprojects and saved my data directly into my Rproject directory. I highly recommend working in Rprojects, but again a run down on that is outside the scope of this tutorial. If you want to learn more, I recommend reading Chapter 8 in the <em>R for Data Science</em> book mentioned above.</p>
 <p>The <code>bugs</code> data frame is a toy dataset and contains community composition data from 14 “sites”. This data is made up, but based on actual surveys conducted on the west coast of the South Island of New Zealand. Always start out by taking a look at the data. It’s good to have a mental image of the data structure. since the <code>read_csv()</code> command reads the data in as a tibble, simply typing the name of the object is a useful place to start.</p>
 <p>Other useful commands that I often use are <code>base::names();base::str() and dplyr::glimpse()</code>. Try running these commads and see how the data output changes.</p>
-<p>Three surber samples (area = 0.06 m<sup>2</sup>) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given genus found within a sample.</p>
+<p>Three surber samples (area = 0.06 m<sup>2</sup>) were taken at each site (s1, s2, s3). The number column represents the number of individuals of a given taxa found within a sample.</p>
 <p>The <code>indices</code> data frame is simply a list of taxa with corresponding tolerance scores for the MCI and AMDI, respectively.</p>
 <pre class="r"><code>indices
 #&gt; # A tibble: 216 × 3
@@ -176,25 +175,23 @@ $(document).ready(function () {
 #&gt; 4         Aeshna     5    NA
 #&gt; # ... with 212 more rows</code></pre>
 </div>
-</div>
 <div id="mci" class="section level1">
 <h1>MCI</h1>
 <div id="step-1-combine-data-frames" class="section level2">
 <h2>Step 1: combine data frames</h2>
-<p>The first thing we want to is combine these data frames so that the <code>bugs</code> object has the MCI and AMDI tolerance scores per taxa. In order to do this we will use the <code>dplyr::left_join()</code> function. Using the <code>left_join()</code> function ensures that all observations in the <code>bugs</code> data frame will be kept, even if no corresponding taxa observation occurs in the <code>indices</code> data frame.</p>
+<p>The first thing we want to is combine these data frames so that the <code>bugs</code> object has the MCI and AMDI tolerance scores by taxa. In order to do this we will use the <code>dplyr::left_join()</code> function. Using the <code>left_join()</code> function ensures that all observations in the <code>bugs</code> data frame will be kept, even if no corresponding taxa observation occurs in the <code>indices</code> data frame.</p>
 <pre class="r"><code>bugs.index &lt;- left_join(bugs, indices, by = &quot;taxa&quot;)</code></pre>
 <p>I made sure that all of the taxa in <code>bugs</code> has a corresponding taxa in the <code>indices</code> data, but it’s a good idea to check this whenever you’re merging two data frames together. There are a number of ways to do this, but I generally use the <code>dplyr::setdiff()</code> function.</p>
 <pre class="r"><code>setdiff(bugs$taxa, indices$taxa)
 #&gt; character(0)</code></pre>
-<p>This shows us that there are no observations in <code>bugs$taxa</code> that <em>do not</em> occur in <code>indices</code>. Compare this with the following:</p>
+<p>This shows us that there are no observations in <code>bugs$taxa</code> that <em>do not</em> occur in <code>indices</code>. Try running the following: <code>setdiff(indices$taxa, bugs$taxa)</code> (output not shown in this document).</p>
 <p>This gives us a character vector containing all of the values of <code>indices$taxa</code> that <em>do not</em> occur in <code>bugs$taxa</code>.</p>
 </div>
 <div id="step-2-calculate-mci" class="section level2">
 <h2>Step 2: calculate MCI</h2>
 <p>The MCI can be calculated using presence / absence data with the following formula: <span class="math display">\[\sum_{i=1}^S a_i / S * 20\]</span> Where <span class="math inline">\(a_i\)</span> is the tolerance value for taxa <em>i</em>, and <span class="math inline">\(S\)</span> is the number of taxa within a sample.</p>
 <p>Values of MCI can range from 0 to 200, but are rarely &lt;50 or &gt;150.</p>
-<p>First, calculate the MCI score per surber. This by grouping the data into unique combinations of site and surber</p>
-<p>In order to calculate the MCI score by sample, we first use the <code>group_by()</code> command. This “groups” the data so that the following summary command is applied to each group independently.</p>
+<p>In order to calculate the MCI score for a site, we first need to calculate the score by surber sample. This is done with the <code>group_by()</code> command. This “groups” the data so that the subsequent <code>summarise</code> command is applied to each group independently.</p>
 <pre class="r"><code>mci.surber &lt;- 
   bugs.index %&gt;% # our combined data fram
   group_by(site, surber) %&gt;% # group the data
@@ -204,7 +201,7 @@ $(document).ready(function () {
   mci.surber %&gt;% # our scores by surber calculated above
   group_by(site) %&gt;% # we drop the 'surber' argument and calculate just by site
   summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI)) # calculate mean and sd MCI</code></pre>
-<p>Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the <code>reorder()</code> function. We will also add reference lines (<code>geom_hline()</code>) delineating which sites are considered excellent, good, fair, and poor.</p>
+<p>Now we will plot the results using ggplot. We will reorder the sites based on their mean.MCI score, from lowest to highest, using the <code>reorder()</code> function. We will also add reference lines using the <code>geom_hline()</code> command for delineating which sites are considered excellent, good, fair, and poor.</p>
 <pre class="r"><code>ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
 # reorder() function organizes sites based on mean.MCI score, lowest to highest               
   geom_bar(stat = &quot;identity&quot;) + # plot bar
@@ -224,7 +221,7 @@ $(document).ready(function () {
 <div id="qmci" class="section level1">
 <h1>QMCI</h1>
 <p>Our data also contains the abundance of taxa per surber sample <code>bugs.index$number</code>, allowing us to calculate the quantitative macroinvertebrate index, or QMCI. The QMCI is calculated using a similar formula, with a modification taking into account the abundance of a given taxa: <span class="math display">\[\sum_{i=1}^S (a_i * n_i) / N\]</span> Where <span class="math inline">\(S\)</span> is the total number of taxa, <span class="math inline">\(n_i\)</span> is the abundance for the <em>i</em>th taxa, and <span class="math inline">\(N\)</span> is the total abundance in the sample.</p>
-<p>The QMCI ranges from 0 to 10. Note that this is a different scale than the MCI this is by design because these metrics should not be directly compared to one another.</p>
+<p>The QMCI ranges from 0 to 10. Note that this is a different scale than the MCI. This is by design because these metrics should not be directly compared to one another.</p>
 <p>Again, we start out by calculating the QMCI score per sample <code>group_by(site, surber)</code>:</p>
 <pre class="r"><code>qmci.surber &lt;- bugs.index %&gt;%
   group_by(site, surber) %&gt;%
@@ -254,7 +251,7 @@ $(document).ready(function () {
 <p>Where <span class="math inline">\(b\)</span> is the tolerance score for the <em>i</em>th taxa and <span class="math inline">\(S\)</span> is the total number of scoring taxa present at a site. If a taxa at a site does not have an AMDI tolerance score, it is not included in the calculation. AMDI scores range from 0 to 100, with higher scores indicating less acid mine drainage impacts. Note that the AMDI can only be calculated with presence/absence data, and there is currently no way of incorporating qauntitative abundance data.</p>
 <pre class="r"><code>amdi.surber &lt;- bugs.index %&gt;%
   group_by(site, surber) %&gt;%
-  filter(!is.na(AMDI)) %&gt;% # remove taxa that do not have AMDI score
+  filter(!is.na(AMDI)) %&gt;% # remove taxa that do not have an AMDI score
   summarise(AMDI = (sum(AMDI) / n()) * log10(n()) * 10)</code></pre>
 <p>And calculate mean score by site:</p>
 <pre class="r"><code>amdi.site &lt;- 
@@ -275,6 +272,68 @@ $(document).ready(function () {
 <div id="just-give-me-the-code" class="section level1">
 <h1>Just give me the code!</h1>
 <p>If you have any questions, see detailed explanation above.</p>
+<pre class="r"><code># load library
+library(tidyverse)
+# read data
+bugs &lt;- read_csv(&quot;bugs.csv&quot;)
+indices &lt;- read_csv(&quot;indices.csv&quot;)
+# merge datasets
+bugs.index &lt;- left_join(bugs, indices, by = &quot;taxa&quot;)
+
+#### MCI ####
+# MCI in one step
+mci.site &lt;- 
+  bugs.index %&gt;% 
+  group_by(site, surber) %&gt;% 
+  summarise(MCI = (sum(MCI) / n()) * 20) %&gt;%
+  group_by(site) %&gt;%
+  summarise(mean.MCI = mean(MCI), sd.MCI = sd(MCI))
+# plot MCI results
+ggplot(mci.site, aes(reorder(site, mean.MCI), mean.MCI)) +
+  geom_bar(stat = &quot;identity&quot;) + 
+  geom_errorbar( 
+    aes(ymax = mean.MCI + sd.MCI, ymin = mean.MCI - sd.MCI), width = 0.25) +
+  geom_hline(yintercept = 119, color = &quot;green&quot;, size = 1) +
+  geom_hline(yintercept = 100, color = &quot;yellow&quot;, size = 1) +
+  geom_hline(yintercept = 80, color = &quot;red&quot;, size = 1) +
+  labs(x = &quot;site&quot;, y = &quot;mean MCI score&quot;) +
+  theme_classic() 
+
+#### QMCI ####
+# QMCI in one step
+qmci.site &lt;- bugs.index %&gt;%
+  group_by(site, surber) %&gt;%
+  summarise(QMCI = (sum(MCI * number) / sum(number))) %&gt;%
+  group_by(site) %&gt;%
+  summarise(mean.QMCI = mean(QMCI), sd.QMCI = sd(QMCI))
+# QMCI plot
+ggplot(qmci.site, aes(reorder(site, mean.QMCI), mean.QMCI)) +             
+  geom_bar(stat = &quot;identity&quot;) +
+  geom_errorbar( 
+    aes(ymax = mean.QMCI + sd.QMCI, ymin = mean.QMCI - sd.QMCI), width = 0.25) +
+  geom_hline(yintercept = 5.99, color = &quot;green&quot;, size = 1) +
+  geom_hline(yintercept = 5, color = &quot;yellow&quot;, size = 1) +
+  geom_hline(yintercept = 4, color = &quot;red&quot;, size = 1) +
+  labs(x = &quot;site&quot;, y = &quot;mean QMCI score&quot;) +
+  theme_classic()
+
+#### AMDI ####
+# AMDI in one step
+amdi.site &lt;-  bugs.index %&gt;%
+  group_by(site, surber) %&gt;%
+  filter(!is.na(AMDI)) %&gt;% 
+  summarise(AMDI = (sum(AMDI) / n()) * log10(n()) * 10) %&gt;%
+  group_by(site) %&gt;%
+  summarise(mean.AMDI = mean(AMDI), sd.AMDI = sd(AMDI))
+# plot AMDI results
+ggplot(amdi.site, aes(reorder(site, mean.AMDI), mean.AMDI)) +
+  geom_bar(stat = &quot;identity&quot;) + 
+  geom_errorbar( 
+    aes(ymax = mean.AMDI + sd.AMDI, ymin = mean.AMDI - sd.AMDI), width = 0.25) +
+  geom_hline(yintercept = 40, color = &quot;green&quot;, size = 1) +
+  geom_hline(yintercept = 20, color = &quot;red&quot;, size = 1) +
+  labs(x = &quot;site&quot;, y = &quot;mean AMDI score&quot;) +
+  theme_classic() </code></pre>
 </div>
 
 
